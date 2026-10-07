@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FutisSarjis - Treeni & Jako</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            touch-action: none; 
+        }
+
+        .dashboard {
+            background: #fff;
+            width: 100%;
+            max-width: 360px;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 2px solid #000;
+        }
+
+        .streak-zone {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #ff4500;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .challenge-box {
+            background: #e6f7ff;
+            border-left: 5px solid #1890ff;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .rating-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .rating-zone {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .thumb-btn {
+            font-size: 1.5rem;
+            background: none;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            padding: 5px 8px;
+            cursor: pointer;
+        }
+        .thumb-btn.selected {
+            background-color: #ffd700;
+            border-color: #000;
+            transform: scale(1.1);
+        }
+
+        /* Työkalurivit */
+        .controls {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            max-width: 360px;
+        }
+        .controls button {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 2px solid #000;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-pen { background-color: #000; color: #fff; }
+        .btn-eraser { background-color: #fff; color: #000; }
+        .btn-clear { background-color: #ff4d4d; color: #fff; }
+        .controls button.active { background-color: #007bff; color: #fff; }
+
+        /* Jaa-nappi alhaalle */
+        .share-zone {
+            width: 100%;
+            max-width: 360px;
+            margin-top: 15px;
+            margin-bottom: 30px;
+        }
+        .btn-share {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background-color: #007bff;
+            color: white;
+            border: 2px solid #000;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Piirtoalustat */
+        .comic-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 360px;
+        }
+        .canvas-box {
+            background-color: #fff;
+            border: 3px solid #000;
+            border-radius: 8px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="streak-zone" id="streakDisplay">🔥 Putki: 0 päivää</div>
+        
+        <div class="rating-title">Päivän piirustushaaste TikTok-liveä varten:</div>
+        <div class="challenge-box" id="challengeDisplay">Ladataan haastetta...</div>
+
+        <div class="rating-title">Arvioi oma työsi (1-5 peukkua):</div>
+        <div class="rating-zone">
+            <button class="thumb-btn" data-value="1">👍</button>
+            <button class="thumb-btn" data-value="2">👍</button>
+            <button class="thumb-btn" data-value="3">👍</button>
+            <button class="thumb-btn" data-value="4">👍</button>
+            <button class="thumb-btn" data-value="5">👍</button>
+        </div>
+        <button id="saveDayBtn" style="width:100%; padding:8px; background:#28a745; color:white; font-weight:bold; border:2px solid #000; border-radius:5px;">Lukitse päivän suoritus & kasvata striikkiä!</button>
+    </div>
+
+    <div class="controls">
+        <button id="penBtn" class="btn-pen active">Kynä</button>
+        <button id="eraserBtn" class="btn-eraser">Kumi</button>
+        <button id="clearBtn" class="btn-clear">Tyhjennä</button>
+    </div>
+
+    <div class="comic-container">
+        <div class="canvas-box"><canvas id="canvas1"></canvas></div>
+        <div class="canvas-box"><canvas id="canvas2"></canvas></div>
+        <div class="canvas-box"><canvas id="canvas3"></canvas></div>
+    </div>
+
+    <!-- UUSI JAKONAPPI -->
+    <div class="share-zone">
+        <button id="shareBtn" class="btn-share">📤 Jaa valmis sarjakuva ystävälle!</button>
+    </div>
+
+    <script>
+        // --- 1. HAASTEET JA LOGIIKKA ---
+        const haasteet = [
+            "Piirrä 10 vapaan käden ympyrää niin nopeasti kuin pystyt ennen sarjakuvaa!",
+            "Joku kiroili livessä! Piirrä robotti, joka syö kirosanoja ja muuttaa ne puhtaaksi energiaksi.",
+            "Tunteet nousivat! Piirrä miltä viha tai turhautuminen näyttää futuristisena laitteena ruudussa 1.",
+            "Liven chatti käy kuumana. Piirrä tulevaisuuden 'rauhan-säde', joka rauhoittaa katsojat.",
+            "Harjoittele perusmuotoja: Tee ruutu 1 pelkillä kuutioilla ja ruutu 2 pelkillä lieriöillä."
+        ];
+
+        const dayOfYear = Math.floor(new Date() / 8.64e7);
+        document.getElementById('challengeDisplay').innerText = haasteet[dayOfYear % haasteet.length];
+
+        let streak = parseInt(localStorage.getItem('comic_streak')) || 0;
+        let lastSavedDate = localStorage.getItem('comic_last_date') || "";
+        let currentRating = 0;
+
+        const streakDisplay = document.getElementById('streakDisplay');
+        streakDisplay.innerText = `🔥 Putki: ${streak} päivää`;
+
+        const thumbBtns = document.querySelectorAll('.thumb-btn');
+        thumbBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentRating = parseInt(btn.getAttribute('data-value'));
+                thumbBtns.forEach((b, idx) => {
+                    if (idx < currentRating) b.classList.add('selected');
+                    else b.classList.remove('selected');
+                });
+            });
+        });
+
+        document.getElementById('saveDayBtn').addEventListener('click', () => {
+            const todayStr = new Date().toDateString();
+            if (currentRating === 0) { alert("Valitse ensin peukkuarvio!"); return; }
+            if (lastSavedDate === todayStr) { alert("Olet jo lukinnut tämän päivän!"); return; }
+
+            streak++;
+            localStorage.setItem('comic_streak', streak);
+            localStorage.setItem('comic_last_date', todayStr);
+            
+            streakDisplay.innerText = `🔥 Putki: ${streak} päivää`;
+            alert(`Mahtavaa! Putkesi kasvoi!`);
+        });
+
+        // --- 2. PIIRTÄMISEN TOIMINNALLISUUS ---
+        const canvases = [
+            document.getElementById('canvas1'),
+            document.getElementById('canvas2'),
+            document.getElementById('canvas3')
+        ];
+
+        let isDrawing = false;
+        let mode = 'pen';
+
+        const penBtn = document.getElementById('penBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        penBtn.addEventListener('click', () => { mode = 'pen'; penBtn.classList.add('active'); eraserBtn.classList.remove('active'); });
+        eraserBtn.addEventListener('click', () => { mode = 'eraser'; eraserBtn.classList.add('active'); penBtn.classList.remove('active'); });
+        
+        canvases.forEach(canvas => {
+            const ctx = canvas.getContext('2d');
+            canvas.width = 400;
+            canvas.height = 400;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Taustaväri valkoiseksi, jotta jaettu kuva ei ole läpinäkyvä
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            function getTouchPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: (e.touches[clientX] - rect.left) * (canvas.width / rect.width),
+                    y: (e.touches[clientY] - rect.top) * (canvas.height / rect.height)
+                };
+            }
+
+            canvas.addEventListener('touchstart', (e) => {
+                isDrawing = true;
+                const pos = getTouchPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isDrawing) return;
+                const pos = getTouchPos(e);
+                
+                if (mode === 'pen') {
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 4;
+                } else {
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 25;
+                }
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            });
+
+            canvas.addEventListener('touchend', () => { isDrawing = false; });
+            clearBtn.addEventListener('click', () => { 
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            });
+        });
+
+        // --- 3. JAKOLOOGIIKKA (Yhdistetään kaikki kolme kuvaa yhdeksi) ---
