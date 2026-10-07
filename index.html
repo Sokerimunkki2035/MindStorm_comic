@@ -7,21 +7,20 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a24; /* Tumma, rauhallinen tausta */
+            background-color: #1a1a24;
             color: #fff;
             margin: 0;
             padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* SIVUN RULLAUSASETUS KORJATTU: sallitaan normaali skrollaus puhelimella */
             overflow-y: auto; 
         }
 
         h1 {
             font-size: 1.5rem;
             margin: 10px 0 5px 0;
-            color: #00d2ff; /* Sähköinen myrskyn sininen */
+            color: #00d2ff;
             text-shadow: 0 0 10px rgba(0,210,255,0.3);
             font-weight: 800;
             letter-spacing: 1px;
@@ -139,7 +138,6 @@
             display: block;
             width: 100%;
             aspect-ratio: 1 / 1;
-            /* ESTETÄÄN SIVUN HYPPIMINEN VAIN KUN PIIRRETÄÄN RUUDUN SISÄLLÄ */
             touch-action: none; 
         }
 
@@ -256,6 +254,7 @@
         const eraserBtn = document.getElementById('eraserBtn');
         const clearBtn = document.getElementById('clearBtn');
 
+        // Korjattu nappien aktiivisuus-tyylittely
         penBtn.addEventListener('click', () => { mode = 'pen'; penBtn.classList.add('active'); eraserBtn.classList.remove('active'); });
         eraserBtn.addEventListener('click', () => { mode = 'eraser'; eraserBtn.classList.add('active'); penBtn.classList.remove('active'); });
         
@@ -269,7 +268,7 @@
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // SORMITUNNISTUS KORJATTU: lisätty [0] osoittamaan ensimmäistä kosketusta
+            // TÄYSIN KORJATTU SORMITUNNISTUS ([0] lisätty):
             function getTouchPos(e) {
                 const rect = canvas.getBoundingClientRect();
                 return {
@@ -280,4 +279,11 @@
 
             canvas.addEventListener('touchstart', (e) => {
                 isDrawing = true;
+                const pos = getTouchPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isDrawing) return;
                 
