@@ -1,10 +1,18 @@
+```html
 <!DOCTYPE html>
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MindStorm Comics - Vent & Create</title>
+    <!-- Canvas Confetti Library for dynamic celebration effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #1a1a24;
@@ -18,24 +26,25 @@
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             margin: 10px 0 5px 0;
             color: #00d2ff;
-            text-shadow: 0 0 10px rgba(0,210,255,0.3);
+            text-shadow: 0 0 12px rgba(0,210,255,0.4);
             font-weight: 800;
             letter-spacing: 1px;
+            text-align: center;
         }
 
         .dashboard {
             background: #242432;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
             padding: 15px;
             border-radius: 12px;
             box-shadow: 0 6px 20px rgba(0,0,0,0.4);
             margin-bottom: 15px;
-            box-sizing: border-box;
             border: 2px solid #00d2ff;
+            position: relative;
         }
 
         .streak-zone {
@@ -53,10 +62,28 @@
             padding: 12px;
             font-weight: bold;
             font-size: 0.95rem;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             border-radius: 0 8px 8px 0;
             color: #e0f7fa;
             line-height: 1.4;
+        }
+
+        .tip-box {
+            font-size: 0.85rem;
+            color: #f1c40f;
+            background: rgba(241, 196, 15, 0.12);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(241, 196, 15, 0.3);
+            line-height: 1.35;
+        }
+
+        .tip-box strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #f39c12;
+            font-size: 0.9rem;
         }
 
         .rating-title {
@@ -71,6 +98,7 @@
             justify-content: space-between;
             margin-bottom: 15px;
         }
+
         .thumb-btn {
             font-size: 1.6rem;
             background: #1a1a24;
@@ -78,8 +106,9 @@
             border-radius: 8px;
             padding: 8px 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: transform 0.15s ease, background-color 0.15s ease;
         }
+
         .thumb-btn.selected {
             background-color: #00d2ff;
             border-color: #fff;
@@ -88,65 +117,122 @@
 
         #saveDayBtn {
             width: 100%;
-            padding: 10px;
-            background: #2ecc71;
+            padding: 12px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
             color: white;
             font-weight: bold;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 1rem;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(46,204,113,0.3);
+            box-shadow: 0 4px 12px rgba(46,204,113,0.3);
+            transition: transform 0.1s ease, filter 0.2s ease;
+        }
+
+        #saveDayBtn:active {
+            transform: scale(0.98);
         }
 
         .controls {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             display: flex;
-            gap: 10px;
+            gap: 6px;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
         }
+
         .controls button {
             flex: 1;
-            padding: 12px;
-            font-size: 0.95rem;
+            padding: 10px 4px;
+            font-size: 0.85rem;
             font-weight: bold;
             border: none;
             border-radius: 8px;
             cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
         }
+
+        .controls button:active {
+            transform: scale(0.95);
+        }
+
         .btn-pen { background-color: #00d2ff; color: #1a1a24; }
         .btn-eraser { background-color: #444; color: #fff; }
+        .btn-undo { background-color: #f39c12; color: #fff; }
+        .btn-grid { background-color: #9b59b6; color: #fff; }
         .btn-clear { background-color: #e74c3c; color: #fff; }
-        .controls button.active { background-color: #fff; color: #000; box-shadow: 0 0 12px rgba(255,255,255,0.5); }
+        .controls button.active { background-color: #fff; color: #000; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+
+        .size-control {
+            width: 100%;
+            max-width: 380px;
+            background: #242432;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .size-control input[type=range] {
+            flex: 1;
+            accent-color: #00d2ff;
+            cursor: pointer;
+        }
 
         .comic-container {
             display: flex;
             flex-direction: column;
             gap: 15px;
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
         }
-        .canvas-box {
+
+        .canvas-wrapper {
+            position: relative;
             background-color: #fff;
             border: 4px solid #00d2ff;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
+
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            display: none;
+        }
+
+        .grid-overlay.active {
+            display: block;
+        }
+
         canvas {
             display: block;
             width: 100%;
             aspect-ratio: 1 / 1;
             touch-action: none; 
+            background: transparent;
         }
 
         .share-zone {
             width: 100%;
-            max-width: 360px;
+            max-width: 380px;
             margin-top: 20px;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
+
         .btn-share {
             width: 100%;
             padding: 14px;
@@ -157,19 +243,122 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,210,255,0.4);
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-share:active {
+            transform: scale(0.98);
+        }
+
+        .gallery-zone {
+            width: 100%;
+            max-width: 380px;
+            margin-bottom: 40px;
+            background: #242432;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #444;
+        }
+
+        .gallery-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #00d2ff;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .gallery-item {
+            background: #1a1a24;
+            border: 2px solid #00d2ff;
+            border-radius: 8px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            border-radius: 4px;
+            display: block;
+        }
+
+        .gallery-date {
+            font-size: 0.75rem;
+            color: #a0a0b0;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .gallery-empty {
+            color: #888;
+            font-size: 0.85rem;
+            text-align: center;
+            grid-column: span 2;
+        }
+
+        /* Lightning Flash Screen Overlay */
+        #flashOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.05s linear;
+        }
+
+        /* Floating Motivational Banner */
+        .toast-banner {
+            position: fixed;
+            top: 20px;
+            background: #00d2ff;
+            color: #1a1a24;
+            font-weight: 800;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 8px 25px rgba(0,210,255,0.5);
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .toast-banner.show {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
+
+    <div id="flashOverlay"></div>
+    <div id="toastBanner" class="toast-banner">⚡ Salama Iski!</div>
 
     <h1>MindStorm Comics</h1>
 
     <div class="dashboard">
         <div class="streak-zone" id="streakDisplay">⚡ Putki: 0 päivää</div>
         
-        <div class="rating-title">Päivän haaste (Kanavoi myrsky taiteeksi):</div>
+        <div class="rating-title">Päivän muotohaaste:</div>
         <div class="challenge-box" id="challengeDisplay">Ladataan haastetta...</div>
+        
+        <div class="tip-box" id="tipDisplay">
+            <strong>💡 Tekniikkaopas:</strong>
+            <span id="tipText">Ladataan vinkkiä...</span>
+        </div>
 
         <div class="rating-title">Miten sait purettua tunteet? (1-5 salamaa):</div>
         <div class="rating-zone">
@@ -185,37 +374,171 @@
     <div class="controls">
         <button id="penBtn" class="btn-pen active">Kynä</button>
         <button id="eraserBtn" class="btn-eraser">Kumi</button>
+        <button id="undoBtn" class="btn-undo">Peru</button>
+        <button id="gridBtn" class="btn-grid">Ruudukko</button>
         <button id="clearBtn" class="btn-clear">Tyhjennä</button>
     </div>
 
+    <div class="size-control">
+        <span>Paksuus:</span>
+        <input type="range" id="brushSize" min="1" max="40" value="4">
+        <span id="sizeValue">4 px</span>
+    </div>
+
     <div class="comic-container">
-        <div class="canvas-box"><canvas id="canvas1"></canvas></div>
-        <div class="canvas-box"><canvas id="canvas2"></canvas></div>
-        <div class="canvas-box"><canvas id="canvas3"></canvas></div>
+        <div class="canvas-wrapper">
+            <div class="grid-overlay"></div>
+            <canvas id="canvas1"></canvas>
+        </div>
+        <div class="canvas-wrapper">
+            <div class="grid-overlay"></div>
+            <canvas id="canvas2"></canvas>
+        </div>
+        <div class="canvas-wrapper">
+            <div class="grid-overlay"></div>
+            <canvas id="canvas3"></canvas>
+        </div>
     </div>
 
     <div class="share-zone">
         <button id="shareBtn" class="btn-share">📤 Jaa MindStorm-sarjakuvasi</button>
     </div>
 
+    <div class="gallery-zone">
+        <div class="gallery-title">🖼️ Omat tallennetut sarjakuvat</div>
+        <div class="gallery-grid" id="galleryGrid">
+            <div class="gallery-empty">Ei vielä tallennettuja töitä. Lukitse päivä tallentaaksesi!</div>
+        </div>
+    </div>
+
     <script>
+        
+        // Comprehensive daily guides and challenges
         const haasteet = [
-            "Piirrä 10 vapaan käden ympyrää niin nopeasti kuin pystyt ennen sarjakuvaa!",
-            "Joku kiroili livessä! Piirrä robotti, joka syö kirosanoja ja muuttaa ne puhtaaksi energiaksi.",
-            "Tunteet nousivat! Piirrä miltä viha tai turhautuminen näyttää futuristisena laitteena ruudussa 1.",
-            "Liven chatti käy kuumana. Piirrä tulevaisuuden 'rauhan-säde', joka rauhoittaa katsojat.",
-            "Harjoittele perusmuotoja: Tee ruutu 1 pelkillä kuutioilla ja ruutu 2 pelkillä lieriöillä."
+            { 
+                text: "Sunnuntai: Täydelliset ympyrät! Piirrä ruutuun 1 vapaalla kädellä 10 ympyrää. Rakenna niistä ruutuihin 2 ja 3 hahmo tai robotti.", 
+                tip: "Pidä ranne lukittuna ja anna koko käsivarren liikkua olkanivelestä asti! Piirrä ympyrä nopealla, rennolla liikkeellä useampaan kertaan saman muodon yli." 
+            },
+            { 
+                text: "Maanantai: Kuutiot ja laatikot! Rakenna ruudun 1 kohtaus pelkillä kuutioilla. Tee siitä 3D-sarjakuva ruutuihin 2 ja 3.", 
+                tip: "Piirrä ensin neliön etusivu. Lisää 45 asteen kulmassa kolme yhdensuuntaista syvyysviivaa kulmista ja yhdistä ne takasivuksi. Saat välittömän 3D-vaikutelman!" 
+            },
+            { 
+                text: "Tiistai: Sylinterit ja putket! Piirrä ruutuun 1 futuristinen robotti, joka koostuu pelkästään putkista ja sylintereistä.", 
+                tip: "Sylinterin pääty ei ole koskaan suora viiva vaan pyöristetty ellipsi (ovaali). Kaaret ylä- ja alareunassa tekevät kappaleesta pyöreän ja putkimaisen." 
+            },
+            { 
+                text: "Keskiviikko: Ellipsit ja ovaalit! Harjoittele ovaalien piirtämistä ruutuun 1. Muotoile niistä hahmojen päitä ja ilmeitä ruutuihin 2 ja 3.", 
+                tip: "Kallista ovaalin pääakselia hahmon pään asennon mukaan. Muista, että kasvojen piirteet (silmät, suu) seuraavat ovaalin kaarevaa pintaa." 
+            },
+            { 
+                text: "Torstai: Varjostus ja 3D-pallo! Piirrä ruutuun 1 mahdollisimman pyöreä pallo ja varjosta se kynällä 3D-muotoon.", 
+                tip: "Päätä valonlähde (esim. ylävasen). Jätä kirkkain kohta valkoiseksi ja varjosta vastakkainen alareuna tummimmaksi kaarevin kynänvedoin." 
+            },
+            { 
+                text: "Perjantai: Suorat viivat ja kulmat! Piirrä ruutu 1 ilman kaarevia viivoja (pelkkiä teräviä kulmia ja neliöitä).", 
+                tip: "Vedä suorat viivat reippaalla ja varmalla kädenliikkeellä. Älä pysähdy kesken vedon. Terävät kulmat luovat dynaamista ja aggressiivista fiilistä." 
+            },
+            { 
+                text: "Lauantai: Vapaa yhdistelmä! Yhdistä ympyrät, kuutiot ja sylinterit yhdeksi monimutkaiseksi laitteeksi tai maisemaksi.", 
+                tip: "Aloita lukitsemalla suuret perusmuodot ensin hahmotelmana ja lisää pienemmät yksityiskohdat ja varjot vasta sen jälkeen." 
+            }
         ];
 
-        const dayOfYear = Math.floor(new Date() / 8.64e7);
-        document.getElementById('challengeDisplay').innerText = haasteet[dayOfYear % haasteet.length];
+        const motivationalQuotes = [
+            "Upeaa muotojen hallintaa!",
+            "Salama iski – voimasi kasvoivat!",
+            "Loistavaa dynaamista kynänjälkeä!",
+            "Viivan tarkkuus kasvaa joka päivä!",
+            "MindStorm-energia on huipussaan!"
+        ];
+
+        const todayIndex = new Date().getDay();
+        document.getElementById('challengeDisplay').innerText = haasteet[todayIndex].text;
+        document.getElementById('tipText').innerText = haasteet[todayIndex].tip;
 
         let streak = parseInt(localStorage.getItem('ms_streak')) || 0;
         let lastSavedDate = localStorage.getItem('ms_last_date') || "";
         let currentRating = 0;
+        let brushLineWidth = 4;
+        let mode = 'pen';
 
         const streakDisplay = document.getElementById('streakDisplay');
         streakDisplay.innerText = `⚡ Putki: ${streak} päivää`;
+
+        // Sound Effects Synthesizer using Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playLightningSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            // White Noise Generator for thunder strike
+            const bufferSize = audioCtx.sampleRate * 0.8;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.8);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+
+            whiteNoise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            // Power Synth Frequency Zap
+            const osc = audioCtx.createOscillator();
+            const oscGain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.5);
+            oscGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.connect(oscGain);
+            oscGain.connect(audioCtx.destination);
+
+            whiteNoise.start();
+            osc.start();
+            whiteNoise.stop(audioCtx.currentTime + 0.8);
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function showToast(text) {
+            const toast = document.getElementById('toastBanner');
+            toast.innerText = text;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function triggerFlashAnimation() {
+            const flash = document.getElementById('flashOverlay');
+            flash.style.opacity = '0.9';
+            setTimeout(() => { flash.style.opacity = '0'; }, 60);
+            setTimeout(() => { flash.style.opacity = '0.7'; }, 120);
+            setTimeout(() => { flash.style.opacity = '0'; }, 250);
+        }
+
+        const brushSizeInput = document.getElementById('brushSize');
+        const sizeValueSpan = document.getElementById('sizeValue');
+        brushSizeInput.addEventListener('input', (e) => {
+            brushLineWidth = parseInt(e.target.value);
+            sizeValueSpan.innerText = `${brushLineWidth} px`;
+        });
 
         const thumbBtns = document.querySelectorAll('.thumb-btn');
         thumbBtns.forEach(btn => {
@@ -228,62 +551,35 @@
             });
         });
 
-        document.getElementById('saveDayBtn').addEventListener('click', () => {
-            const todayStr = new Date().toDateString();
-            if (currentRating === 0) { alert("Anna itsellesi arvosana ennen tallennusta!"); return; }
-            if (lastSavedDate === todayStr) { alert("Tämä päivä on jo suoritettu!"); return; }
-
-            streak++;
-            localStorage.setItem('ms_streak', streak);
-            localStorage.setItem('ms_last_date', todayStr);
-            
-            streakDisplay.innerText = `⚡ Putki: ${streak} päivää`;
-            alert(`Upeaa! Päivä tallennettu. Putkesi on nyt ${streak} päivää!`);
-        });
-
         const canvases = [
             document.getElementById('canvas1'),
             document.getElementById('canvas2'),
             document.getElementById('canvas3')
         ];
 
+        let historyStack = [];
+
+        function saveHistoryState() {
+            const state = canvases.map(c => c.getContext('2d').getImageData(0, 0, c.width, c.height));
+            historyStack.push(state);
+            if (historyStack.length > 30) historyStack.shift();
+        }
+
         let isDrawing = false;
-        let mode = 'pen';
 
         const penBtn = document.getElementById('penBtn');
         const eraserBtn = document.getElementById('eraserBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const gridBtn = document.getElementById('gridBtn');
         const clearBtn = document.getElementById('clearBtn');
 
-        // Korjattu nappien aktiivisuus-tyylittely
-        penBtn.addEventListener('click', () => { mode = 'pen'; penBtn.classList.add('active'); eraserBtn.classList.remove('active'); });
-        eraserBtn.addEventListener('click', () => { mode = 'eraser'; eraserBtn.classList.add('active'); penBtn.classList.remove('active'); });
-        
-        canvases.forEach(canvas => {
-            const ctx = canvas.getContext('2d');
-            canvas.width = 400;
-            canvas.height = 400;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+        penBtn.addEventListener('click', () => { 
+            mode = 'pen'; 
+            penBtn.classList.add('active'); 
+            eraserBtn.classList.remove('active'); 
+        });
 
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // TÄYSIN KORJATTU SORMITUNNISTUS ([0] lisätty):
-            function getTouchPos(e) {
-                const rect = canvas.getBoundingClientRect();
-                return {
-                    x: (e.touches[0].clientX - rect.left) * (canvas.width / rect.width),
-                    y: (e.touches[0].clientY - rect.top) * (canvas.height / rect.height)
-                };
-            }
-
-            canvas.addEventListener('touchstart', (e) => {
-                isDrawing = true;
-                const pos = getTouchPos(e);
-                ctx.beginPath();
-                ctx.moveTo(pos.x, pos.y);
-            });
-
-            canvas.addEventListener('touchmove', (e) => {
-                if (!isDrawing) return;
-                
+        eraserBtn.addEventListener('click', () => { 
+            mode = 'eraser'; 
+            eraserBtn.classList.add('active'); 
+            penBtn.classList.remove(
