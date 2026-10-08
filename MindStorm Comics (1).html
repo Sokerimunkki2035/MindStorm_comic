@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MindStorm Comics - Hahmopiirustus</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f111a;
+            color: #f0f2f5;
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin: 8px 0;
+            color: #00d2ff;
+            text-shadow: 0 0 12px rgba(0,210,255,0.4);
+            font-weight: 800;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .dashboard {
+            background: #181b2a;
+            width: 100%;
+            max-width: 400px;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            margin-bottom: 14px;
+            border: 2px solid #00d2ff;
+        }
+
+        .streak-zone {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ff5722;
+            text-align: center;
+            margin-bottom: 12px;
+            text-shadow: 0 0 8px rgba(255,87,34,0.3);
+        }
+
+        .challenge-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #00d2ff;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .challenge-box {
+            background: #10243e;
+            border-left: 5px solid #00d2ff;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            margin-bottom: 10px;
+            border-radius: 0 10px 10px 0;
+            color: #e0f7fa;
+            line-height: 1.4;
+        }
+
+        .tip-box {
+            font-size: 0.82rem;
+            color: #ffd54f;
+            background: rgba(255, 213, 79, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            border: 1px solid rgba(255, 213, 79, 0.3);
+            line-height: 1.35;
+        }
+
+        .rating-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #94a3b8;
+        }
+
+        .rating-zone {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 6px;
+        }
+
+        .thumb-btn {
+            flex: 1;
+            font-size: 1.3rem;
+            background: #10121d;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            padding: 8px 0;
+            cursor: pointer;
+            color: #fff;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thumb-btn.selected {
+            background-color: #00d2ff;
+            border-color: #ffffff;
+            transform: scale(1.08);
+            box-shadow: 0 0 12px rgba(0,210,255,0.6);
+        }
+
+        #saveDayBtn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-weight: 800;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+            transition: transform 0.1s ease, filter 0.2s;
+        }
+
+        #saveDayBtn:active {
+            transform: scale(0.98);
+        }
+
+        .controls {
+            margin-bottom: 10px;
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .controls button {
+            flex: 1;
+            padding: 11px 4px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-pen { background-color: #00d2ff; color: #0f111a; }
+        .btn-eraser { background-color: #334155; color: #fff; }
+        .btn-undo { background-color: #f59e0b; color: #fff; }
+        .btn-clear { background-color: #ef4444; color: #fff; }
+        
+        .controls button.active {
+            box-shadow: 0 0 0 3px #ffffff, 0 0 10px rgba(255,255,255,0.5);
+            transform: translateY(-1px);
+        }
+
+        .size-control {
+            width: 100%;
+            max-width: 400px;
+            background: #181b2a;
+            padding: 10px 14px;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid #2e354f;
+        }
+
+        .size-control input[type=range] {
+            flex: 1;
+            accent-color: #00d2ff;
+        }
+
+        .grid-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            color: #38bdf8;
+            font-size: 0.8rem;
+        }
+
+        .comic-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .canvas-box {
+            background-color: #ffffff;
+            border: 4px solid #00d2ff;
+            border-radius: 14px;
+            overflow: hidden;
+            width: 100%;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .panel-label {
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            background: rgba(0,210,255,0.85);
+            color: #0f111a;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            touch-action: none; 
+            background-color: #ffffff;
+        }
+
+        .share-zone {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+        .btn-share {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d2ff, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,210,255,0.4);
+            transition: transform 0.1s ease;
+        }
+
+        .btn-share:active {
+            transform: scale(0.98);
+        }
+
+        .gallery-zone {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 40px;
+            background: #181b2a;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid #2e354f;
+        }
+
+        .gallery-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #00d2ff;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .gallery-item {
+            background: #0f111a;
+            border: 2px solid #00d2ff;
+            border-radius: 10px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .gallery-date {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 6px;
+            font-weight: 700;
+        }
+
+        .gallery-empty {
+            color: #64748b;
+            font-size: 0.85rem;
+            text-align: center;
+            grid-column: span 2;
+            padding: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>MindStorm Comics</h1>
+
+    <div class="dashboard">
+        <div class="streak-zone" id="streakDisplay">⚡ Putki: 0 päivää</div>
+        
+        <div class="challenge-title">Päivän pikahahmopostaus:</div>
+        <div class="challenge-box" id="challengeDisplay">Ladataan haastetta...</div>
+        <div class="tip-box" id="tipDisplay">💡 Vinkki: Ladataan...</div>
+
+        <div class="rating-title">Miten sait visualisoitua ideasi? (1-5 salamaa):</div>
+        <div class="rating-zone">
+            <button class="thumb-btn" data-value="1">⚡</button>
+            <button class="thumb-btn" data-value="2">⚡</button>
+            <button class="thumb-btn" data-value="3">⚡</button>
+            <button class="thumb-btn" data-value="4">⚡</button>
+            <button class="thumb-btn" data-value="5">⚡</button>
+        </div>
+        <button id="saveDayBtn">Lukitse päivä & kasvata striikkiä!</button>
+    </div>
+
+    <div class="controls">
+        <button id="penBtn" class="btn-pen active">Kynä</button>
+        <button id="eraserBtn" class="btn-eraser">Kumi</button>
+        <button id="undoBtn" class="btn-undo">Peru</button>
+        <button id="clearBtn" class="btn-clear">Tyhjennä</button>
+    </div>
+
+    <div class="size-control">
+        <span>Paksuus:</span>
+        <input type="range" id="brushSize" min="1" max="25" value="3">
+        <span id="sizeValue">3 px</span>
+        <label class="grid-toggle">
+            <input type="checkbox" id="gridToggle"> Apuviivat
+        </label>
+    </div>
+
+    <div class="comic-container">
+        <div class="canvas-box">
+            <span class="panel-label">RUUTU 1</span>
+            <canvas id="canvas1" width="400" height="400"></canvas>
+        </div>
+        <div class="canvas-box">
+            <span class="panel-label">RUUTU 2</span>
+            <canvas id="canvas2" width="400" height="400"></canvas>
+        </div>
+        <div class="canvas-box">
+            <span class="panel-label">RUUTU 3</span>
+            <canvas id="canvas3" width="400" height="400"></canvas>
+        </div>
+    </div>
+
+    <div class="share-zone">
+        <button id="shareBtn" class="btn-share">📤 Jaa / Tallenna sarjakuva</button>
+    </div>
+
+    <div class="gallery-zone">
+        <div class="gallery-title">🖼️ Tallennetut pikasarjakuvat</div>
+        <div class="gallery-grid" id="galleryGrid">
+            <div class="gallery-empty">Ei vielä tallennettuja sarjakuvia.</div>
+        </div>
+    </div>
+
+    <script>
+        // Haasteet & Vinkit (Omat nopeille hahmoille, eleille ja tilanteille)
+        const haasteet = [
+            { text: "Sunnuntai: Vauhti & Liikeviivat! Piirrä tikkuhahmo juoksemassa karkuun jotain ruudussa 1, kompastumassa ruudussa 2 ja selviytymässä ruudussa 3.", tip: "Käytä kaarevaa selkärankaa näyttämään vauhtia ja lisää 2-3 liikeviivaa raajojen taakse." },
+            { text: "Maanantai: Ilmeet & Tunteet! Kuvaa hahmon reaktio yllätykseen: 1) Rauhallinen 2) Järkytys/Ihanne 3) Nauru tai helpotus.", tip: "Suurenna silmiä ja suuta reaktioruudussa. Iso ele tekee tunteesta selkeän." },
+            { text: "Tiistai: Toiminta & Eleet (Gesture drawing)! Piirrä kaksi hahmoa kamppailemassa tai tanssimassa nopeilla 5 sekunnin viivavedoilla.", tip: "Älä piirrä yksityiskohtia! Piirrä vain kehon asento (toimintalinja/action line) ja päät palloina." },
+            { text: "Keskiviikko: Tilanteen Yllätyskäänne! Ruutu 1: Hahmo keksii idean. Ruutu 2: Hän yrittää suorittaa sen. Ruutu 3: Naurettava lopputulos.", tip: "Käytä pään yläpuolella symboleita (huutomerkki, lamppu, kysymysmerkki)." },
+            { text: "Torstai: Perspektiivi & Lähi-ilme! Ruutu 1: Hahmo kaukaa. Ruutu 2: Hahmo kävelee lähelle. Ruutu 3: Isosilmämäinen lähikuva naamasta.", tip: "Mitään ei tarvitse kumi panna - nopeat viivat tuovat sarjakuvaan eloa!" },
+            { text: "Perjantai: Vuorovaikutus & Puhekuplat! Rakenna nopea keskustelu kahden tikku- tai pallohahmon välille (1-3 lausetta).", tip: "Piirrä hahmojen asennoista nopeat (nojaus eteen = kiinnostus, nojaus taakse = epäluulo)." },
+            { text: "Lauantai: Supersankari-pysäytys! Piirrä sankarillinen "Laskeutuminen" tai tuuletus kolmessa nopeatempoisessa ruudussa.", tip: "Levitä raajat leveälle ja tee jaloista tukevat – se luo voimakkaan vaikutelman." }
+        ];
+
+        // Päivitä päivän haaste
+        const todayIndex = new Date().getDay();
+        document.getElementById('challengeDisplay').innerText = haasteet[todayIndex].text;
+        document.getElementById('tipDisplay').innerText = "💡 Vinkki: " + haasteet[todayIndex].tip;
+
+        // Striikki & Tila
+        let streak = parseInt(localStorage.getItem('ms_streak')) || 0;
+        let lastSavedDate = localStorage.getItem('ms_last_date') || "";
+        let currentRating = 0;
+        let brushLineWidth = 3;
+        let mode = 'pen';
+        let showGrid = false;
+
+        const streakDisplay = document.getElementById('streakDisplay');
+        streakDisplay.innerText = `⚡ Putki: ${streak} päivää`;
+
+        // Säätimet
+        const brushSizeInput = document.getElementById('brushSize');
+        const sizeValueSpan = document.getElementById('sizeValue');
+        const gridToggle = document.getElementById('gridToggle');
+
+        brushSizeInput.addEventListener('input', (e) => {
+            brushLineWidth = parseInt(e.target.value);
+            sizeValueSpan.innerText = `${brushLineWidth} px`;
+        });
+
+        gridToggle.addEventListener('change', (e) => {
+            showGrid = e.target.checked;
+            redrawAll();
+        });
+
+        // Arviointinapit
+        const thumbBtns = document.querySelectorAll('.thumb-btn');
+        thumbBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentRating = parseInt(btn.getAttribute('data-value'));
+                thumbBtns.forEach((b, idx) => {
+                    if (idx < currentRating) b.classList.add('selected');
+                    else b.classList.remove('selected');
+                });
+            });
+        });
+
+        // Kankaat & Piirtäminen
+        const canvases = [
+            document.getElementById('canvas1'),
+            document.getElementById('canvas2'),
+            document.getElementById('canvas3')
+        ];
+
+        let historyStack = [];
+
+        function saveHistoryState() {
+            const state = canvases.map(c => c.getContext('2d').getImageData(0, 0, c.width, c.height));
+            historyStack.push(state);
+            if (historyStack.length > 25) historyStack.shift();
+        }
+
+        const penBtn = document.getElementById('penBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const clearBtn = document.getElementById('clearBtn');
+
+        penBtn.addEventListener('click', () => { 
+            mode = 'pen'; 
+            penBtn.classList.add('active'); 
+            eraserBtn.classList.remove('active'); 
+        });
+
+        eraserBtn.addEventListener('click', () => { 
+            mode = 'eraser'; 
+            eraserBtn.classList.add('active'); 
+            penBtn.classList.remove('active'); 
+        });
+
+        function clearSingleCanvas(canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (showGrid) drawGridLines(ctx, canvas.width, canvas.height);
+        }
+
+        function drawGridLines(ctx, width, height) {
+            ctx.save();
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            
+            // Kolmannekset (rule of thirds)
+            ctx.moveTo(width / 3, 0); ctx.lineTo(width / 3, height);
+            ctx.moveTo((width / 3) * 2, 0); ctx.lineTo((width / 3) * 2, height);
+            ctx.moveTo(0, height / 3); ctx.lineTo(width, height / 3);
+            ctx.moveTo(0, (height / 3) * 2); ctx.lineTo(width, (height / 3) * 2);
+            
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function redrawAll() {
+            if (historyStack.length > 0) {
+                const currentState = historyStack[historyStack.length - 1];
+                canvases.forEach((c, i) => {
+                    const ctx = c.getContext('2d');
+                    ctx.putImageData(currentState[i], 0, 0);
+                    if (showGrid) drawGridLines(ctx, c.width, c.height);
+                });
+            } else {
+                canvases.forEach(c => clearSingleCanvas(c));
+            }
+        }
+
+        canvases.forEach(canvas => {
+            const ctx = canvas.getContext('2d');
+            clearSingleCanvas(canvas);
+
+            let isDrawing = false;
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                let clientX = e.clientX;
+                let clientY = e.clientY;
+
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else if (e.changedTouches && e.changedTouches.length > 0) {
+                    clientX = e.changedTouches[0].clientX;
+                    clientY = e.changedTouches[0].clientY;
+                }
+
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height)
+                };
+            }
+
+            function startDrawing(e) {
+                saveHistoryState();
+                isDrawing = true;
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+                const pos = getPos(e);
+
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                if (mode === 'pen') {
+                    ctx.strokeStyle = '#0f111a';
+                    ctx.lineWidth = brushLineWidth;
+                } else {
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = brushLineWidth * 5;
+                }
+
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+
+            function stopDrawing() {
+                if (isDrawing) {
+                    ctx.closePath();
+                    isDrawing = false;
+                }
+            }
+
+            // Kosketusnäyttö - saumaton tuki ilman viivettä
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, { passive: false });
+            canvas.addEventListener('touchend', (e) => { e.preventDefault(); stopDrawing(); }, { passive: false });
+
+            // Hiirituki
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+        });
+
+        // Peruuta (Undo)
+        undoBtn.addEventListener('click', () => {
+            if (historyStack.length > 0) {
+                const previousState = historyStack.pop();
+                canvases.forEach((c, i) => {
+                    const ctx = c.getContext('2d');
+                    ctx.putImageData(previousState[i], 0, 0);
+                    if (showGrid) drawGridLines(ctx, c.width, c.height);
+                });
+            }
+        });
+
+        // Tyhjennä kankaat
+        clearBtn.addEventListener('click', () => {
+            saveHistoryState();
+            canvases.forEach(canvas => clearSingleCanvas(canvas));
+        });
+
+        // Generoi yhdistetty kuva
+        function generateCompositeImage() {
+            const exportCanvas = document.createElement('canvas');
+            const expCtx = exportCanvas.getContext('2d');
+            
+            const padding = 20;
+            const headerHeight = 75;
+            const panelWidth = 400;
+            const panelHeight = 400;
+            
+            exportCanvas.width = panelWidth + (padding * 2);
+            exportCanvas.height = headerHeight + (panelHeight * 3) + (padding * 4);
+
+            // Tausta
+            expCtx.fillStyle = '#0f111a';
+            expCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+
+            // Otsikko
+            expCtx.fillStyle = '#00d2ff';
+            expCtx.font = 'bold 22px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+            expCtx.textAlign = 'center';
+            expCtx.fillText('MindStorm Comics', exportCanvas.width / 2, 36);
+
+            expCtx.fillStyle = '#94a3b8';
+            expCtx.font = '13px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif';
+            expCtx.fillText(`Pikasarjakuva - Putki: ${streak} pv`, exportCanvas.width / 2, 58);
+
+            // Ruudut
+            canvases.forEach((c, index) => {
+                const yPos = headerHeight + padding + index * (panelHeight + padding);
+                
+                // Kehys
+                expCtx.fillStyle = '#00d2ff';
+                expCtx.fillRect(padding - 4, yPos - 4, panelWidth + 8, panelHeight + 8);
+                
+                // Piirros
+                expCtx.drawImage(c, padding, yPos, panelWidth, panelHeight);
+            });
+
+            return exportCanvas.toDataURL('image/png');
+        }
+
+        // Galleria
+        function loadGallery() {
+            const galleryGrid = document.getElementById('galleryGrid');
+            const savedComics = JSON.parse(localStorage.getItem('ms_gallery')) || [];
+
+            if (savedComics.length === 0) {
+                galleryGrid.innerHTML = '<div class="gallery-empty">Ei vielä tallennettuja sarjakuvia.</div>';
+                return;
+            }
+
+            galleryGrid.innerHTML = '';
+            savedComics.slice().reverse().forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'gallery-item';
+                div.innerHTML = `
+                    <img src="${item.dataUrl}" alt="Sarjakuva ${item.date}">
+                    <div class="gallery-date">${item.date} (${item.rating} ⚡)</div>
+                `;
+                galleryGrid.appendChild(div);
+            });
+        }
+        loadGallery();
+
+        // Lukitse Päivä & Tallenna
+        document.getElementById('saveDayBtn').addEventListener('click', () => {
+            const todayStr = new Date().toLocaleDateString('fi-FI');
+            
+            if (currentRating === 0) { 
+                alert("Anna itsellesi arvosana (1-5 salamaa) ennen lukitsemista!"); 
+                return; 
+            }
+            if (lastSavedDate === todayStr) { 
+                alert("Olet jo lukinnut tämän päivän suorituksen! Hienoa työtä."); 
+                return; 
+            }
+            
+            streak++;
+            lastSavedDate = todayStr;
+            localStorage.setItem('ms_streak', streak);
+            localStorage.setItem('ms_last_date', todayStr);
+            streakDisplay.innerText = `⚡ Putki: ${streak} päivää`;
+
+            const dataUrl = generateCompositeImage();
+            const savedComics = JSON.parse(localStorage.getItem('ms_gallery')) || [];
+            savedComics.push({
+                date: todayStr,
+                rating: currentRating,
+                dataUrl: dataUrl
+            });
+            localStorage.setItem('ms_gallery', JSON.stringify(savedComics));
+            
+            loadGallery();
+            alert(`Upeaa! Päivän suoritus lukittu. Putkesi on nyt ${streak} päivää!`);
+        });
+
+        // Jaa / Tallenna kuva
+        document.getElementById('shareBtn').addEventListener('click', async () => {
+            const dataUrl = generateCompositeImage();
+            
+            try {
+                const response = await fetch(dataUrl);
+                const blob = await response.blob();
+                const file = new File([blob], 'mindstorm-pikasarjakuva.png', { type: 'image/png' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'MindStorm Comics',
+                        text: 'Katso päivän pikasarjakuvani!',
+                        files: [file]
+                    });
+                } else {
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = 'mindstorm-pikasarjakuva.png';
+                    a.click();
+                }
+            } catch (err) {
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = 'mindstorm-pikasarjakuva.png';
+                a.click();
+            }
+        });
+    </script>
+</body>
+</html>
